@@ -1,0 +1,24 @@
+--cpu=Cortex-M4.fp
+"cube\system_stm32f4xx.o"
+"cube\startup_stm32f407xx.o"
+"cube\stm32f4xx_it.o"
+"cube\stm32f4xx_hal_msp.o"
+"cube\main.o"
+"cube\stm32f4xx_hal_pwr_ex.o"
+"cube\stm32f4xx_hal_rcc_ex.o"
+"cube\stm32f4xx_hal_flash.o"
+"cube\stm32f4xx_hal_flash_ex.o"
+"cube\stm32f4xx_hal_dma_ex.o"
+"cube\stm32f4xx_hal_tim_ex.o"
+"cube\stm32f4xx_hal_cortex.o"
+"cube\stm32f4xx_hal_rcc.o"
+"cube\stm32f4xx_hal_tim.o"
+"cube\stm32f4xx_hal_flash_ramfunc.o"
+"cube\stm32f4xx_hal_dma.o"
+"cube\stm32f4xx_hal_gpio.o"
+"cube\stm32f4xx_hal_pwr.o"
+"cube\stm32f4xx_hal.o"
+--library_type=microlib --strict --scatter "CUBE\CUBE.sct"
+--diag_suppress=L6329 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "CUBE.map" -o CUBE\CUBE.axf
