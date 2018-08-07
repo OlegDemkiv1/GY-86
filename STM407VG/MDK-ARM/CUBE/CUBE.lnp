@@ -18,6 +18,9 @@
 "cube\stm32f4xx_hal_gpio.o"
 "cube\stm32f4xx_hal_pwr.o"
 "cube\stm32f4xx_hal.o"
+"cube\stm32f4xx_hal_i2c.o"
+"cube\stm32f4xx_hal_i2c_ex.o"
+"cube\stm32f4xx_hal_uart.o"
 --library_type=microlib --strict --scatter "CUBE\CUBE.sct"
 --diag_suppress=L6329 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

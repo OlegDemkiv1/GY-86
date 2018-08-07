@@ -44,15 +44,20 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
+UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+void I2C_scaner(void);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_I2C1_Init(void);
+static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -88,6 +93,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_I2C1_Init();
+  MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
 
@@ -100,6 +107,10 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+		I2C_scaner();
+		HAL_Delay(2000);
+		
+		
 		
   }
   /* USER CODE END 3 */
@@ -161,6 +172,45 @@ void SystemClock_Config(void)
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
+/* I2C1 init function */
+static void MX_I2C1_Init(void)
+{
+
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
+/* USART2 init function */
+static void MX_USART2_UART_Init(void)
+{
+
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
 /** Configure pins as 
         * Analog 
         * Input 
@@ -180,8 +230,6 @@ void SystemClock_Config(void)
      PA12   ------> USB_OTG_FS_DP
      PC10   ------> I2S3_CK
      PC12   ------> I2S3_SD
-     PB6   ------> I2C1_SCL
-     PB9   ------> I2C1_SDA
 */
 static void MX_GPIO_Init(void)
 {
@@ -298,17 +346,86 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(OTG_FS_OverCurrent_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Audio_SCL_Pin Audio_SDA_Pin */
-  GPIO_InitStruct.Pin = Audio_SCL_Pin|Audio_SDA_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
 }
 
 /* USER CODE BEGIN 4 */
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+void I2C_scaner(void)
+{
+	/*Description function
+	This function search devise connected to I2C in this case -hi2c1.
+	After thet function print in console information about what to connect to I2C. 
+	*/
+	#define DEVICE_FOUND  0
+	uint8_t addres_devise=0x00;;      //ADRESS_MPU6050=0x68; -> return 0  ,   DRESS_MS5611=0x77;-> return 0 		 
+	uint8_t addr=0;
+	uint16_t sizebuf=1;								// size how many data we receive from devise			
+	uint8_t buff=0;										// data for receive
+	uint32_t timeout=1000;						// timeout for receive
+  uint16_t STATUS=0;								// Status connect to device (if STATUS==0 - device if found, if STATUS==1 - device if not found)
+	uint8_t number_of_device=0;				// How many device controller is found
+	
+	uint8_t size=0;
+	char str3[35]={0};
+	uint8_t size_mas=sizeof(str3);
+	uint8_t i=0;
+	
+	sprintf(str3,"SEARCH DEVISES... \r\n");      										// convert   in  str 
+	size=sizeof(str3);
+	HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
+	HAL_Delay(500);
+	for(addres_devise=0x00;addres_devise<0x7F;addres_devise++)
+	{
+			HAL_Delay(10);
+			STATUS=HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise<<1,(uint16_t)addr, (uint16_t) sizebuf, &buff, (uint16_t) sizebuf,(uint32_t) timeout);
+			if(STATUS==DEVICE_FOUND)																		// if devsice is found
+			{	
+				  for(i=0;i<size_mas;i++)    															// Delete data in str3[]
+					{
+						str3[i]=0;
+					}
+					sprintf(str3,"Device address-0x%x - found \r\n",addres_devise);      // convert   in  str 
+					size=sizeof(str3);
+					HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
+					number_of_device++;
+			}
+	}
+	if(number_of_device==0)  																				// If devices nofound
+	{	
+			for(i=0;i<size_mas;i++)				 															// Delete data in str3[]
+			{
+				str3[i]=0;
+			}
+			sprintf(str3,"Devices no found!!!\r\n");      							// convert   in  str 
+			size=sizeof(str3);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
+	}
+	HAL_Delay(500);
+	for(i=0;i<size_mas;i++)																					// Delete data in str3[]
+	{
+		str3[i]=0;
+	}
+	sprintf(str3,"DONE\r\n");      																	// convert   in  str 
+	size=sizeof(str3);
+	HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);	
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* USER CODE END 4 */
 
