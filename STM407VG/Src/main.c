@@ -69,12 +69,20 @@ uint16_t WHO_AM_I_HMC5883L_C=0x12;
 uint16_t identification_register_A=0x48;
 uint16_t identification_register_B=0x34;
 uint16_t identification_register_C=0x33;
+uint8_t Continuous_Measurement_Moden=0x01;
+uint8_t Mode_Register=0x02;
+uint16_t Data_Output_X_MSB_Register=0x03;
+int16_t MAG_X=0;
+int16_t MAG_Y=0;
+int16_t MAG_Z=0;
+	  
 //
 
 void I2C_scaner(void);
 uint8_t init_MPU6050(void);
-uint8_t init_HMC5883L(void);
+uint8_t read_data_from_HMC5883L(void);
 void read_data_from_MPU6050(void);
+
 
 /* USER CODE END PV */
 
@@ -124,7 +132,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   I2C_scaner();
 	init_MPU6050();
-	init_HMC5883L();
+	//init_HMC5883L();
 	
 	
   /* USER CODE END 2 */
@@ -139,24 +147,15 @@ int main(void)
 		
 			HAL_Delay(100);
 
+		  read_data_from_MPU6050();
+		  read_data_from_HMC5883L();
 		
-		  init_HMC5883L();
-		
-		
-		//			read_data_from_MPU6050();
-//			
-//			
-//			uint8_t size=1;
-//			char str3[50]={0};
-//			sprintf(str3,"Acceleration: X- %d, Y- %d, Z- %d \r\n", ACCEL_X, ACCEL_Y, ACCEL_Z);      // convert   in  str 
-//			size=sizeof(str3);
-//			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFF);
-
-//			char str4[50]={0};
-//			sprintf(str4,"Giroscope: X- %d, Y- %d, Z- %d\r\n", GIRO_X,GIRO_Y,GIRO_Z);      // convert   in  str 
-//			size=sizeof(str4);
-//			HAL_UART_Transmit(&huart2 , (uint8_t *)str4, size, 0xFF);
-		
+			char str3[100]={0};
+		  uint8_t size=0;
+			sprintf(str3,"MAG| X: %d, Y: %d, Z: %d|\r\nACCEL| X: %d, Y: %d, Z: %d|\r\nGIRO| X: %d, Y: %d, Z: %d|\r\n",MAG_X, MAG_Y, MAG_Z,ACCEL_X, ACCEL_X, ACCEL_X,GIRO_X,GIRO_Y,GIRO_Z);      // convert   in  str 
+			size=sizeof(str3);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
+			 
 		
 		
   }
@@ -539,42 +538,27 @@ void read_data_from_MPU6050(void)
 			GIRO_Z=(uint16_t)buff[4]<<8|buff[5];
 }
 
-uint8_t init_HMC5883L(void)
+uint8_t read_data_from_HMC5883L(void)
 {
-			int16_t MAG_X=0;
-			int16_t MAG_Y=0;
-			int16_t MAG_Z=0;
-	  
-	
-	
-			//Read Identification register 
-	    uint8_t buff[6]={0};
-	    uint16_t sizebuf=6;
 			uint32_t timeout=0xFF;
-	    uint16_t test=0x03;
-			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_HMC5883L<<1,(uint16_t)test, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
-	    MAG_X=(int16_t)buff[0]<<8|buff[1];
-			MAG_Y=(int16_t)buff[2]<<8|buff[3];
-			MAG_Z=(int16_t)buff[4]<<8|buff[5];
-			
-	    uint8_t size=1;
-			char str3[50]={0};
-			sprintf(str3,"GIRO: X:%d, Y:%d, Z:%d \r\n", MAG_X,MAG_Y,MAG_Z);      // convert   in  str 
-			size=sizeof(str3);
-			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFF);
-
-	    
+			uint8_t STATUS=1;
+	    // Init magnitometr for enabble Continuous-Measurement Mode
+			STATUS=HAL_I2C_Mem_Write(&hi2c1, (uint16_t)addres_devise_HMC5883L<<1, (uint16_t) Mode_Register, (uint16_t) 1, &Continuous_Measurement_Moden, (uint16_t) 1, (uint32_t) 0xFF);
+			if(STATUS==1)			// Dewise not respond
+			{
+						//ERROR
+			}
+			else							// Dewise respond OK
+			{
+						uint16_t sizebuf=6;
+						uint8_t buff[6]={0};
+						// Read data from magnitometr
+						HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_HMC5883L<<1,(uint16_t)Data_Output_X_MSB_Register, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
+						MAG_X=(int16_t)buff[0]<<8|buff[1];
+						MAG_Y=(int16_t)buff[2]<<8|buff[3];
+						MAG_Z=(int16_t)buff[4]<<8|buff[5];
+			}
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
