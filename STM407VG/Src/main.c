@@ -50,8 +50,31 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+//Registers MPU6050
+uint16_t addres_devise_MPU6050=0x68;
+uint16_t WHO_AM_I_MPU6050=0x68;
+uint16_t WHO_AM_I_ADDRES_MPU6050=0x75;  
+int16_t ACCEL_X=0;
+int16_t ACCEL_Y=0;
+int16_t ACCEL_Z=0;
+int16_t GIRO_X=0;
+int16_t GIRO_Y=0;
+int16_t GIRO_Z=0;
+//
+// variables for HMC5883L
+uint16_t addres_devise_HMC5883L=0x1E;
+uint16_t WHO_AM_I_HMC5883L_A=0x10;
+uint16_t WHO_AM_I_HMC5883L_B=0x11;
+uint16_t WHO_AM_I_HMC5883L_C=0x12;
+uint16_t identification_register_A=0x48;
+uint16_t identification_register_B=0x34;
+uint16_t identification_register_C=0x33;
+//
+
 void I2C_scaner(void);
 uint8_t init_MPU6050(void);
+uint8_t init_HMC5883L(void);
+void read_data_from_MPU6050(void);
 
 /* USER CODE END PV */
 
@@ -99,7 +122,11 @@ int main(void)
   MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
-  //I2C_scaner();
+  I2C_scaner();
+	init_MPU6050();
+	init_HMC5883L();
+	
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,11 +137,25 @@ int main(void)
    
   /* USER CODE BEGIN 3 */
 		
-	
-	 init_MPU6050();
-	 HAL_Delay(500);
-	 I2C_scaner();
-	 HAL_Delay(500);
+			HAL_Delay(100);
+
+		
+		  init_HMC5883L();
+		
+		
+		//			read_data_from_MPU6050();
+//			
+//			
+//			uint8_t size=1;
+//			char str3[50]={0};
+//			sprintf(str3,"Acceleration: X- %d, Y- %d, Z- %d \r\n", ACCEL_X, ACCEL_Y, ACCEL_Z);      // convert   in  str 
+//			size=sizeof(str3);
+//			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFF);
+
+//			char str4[50]={0};
+//			sprintf(str4,"Giroscope: X- %d, Y- %d, Z- %d\r\n", GIRO_X,GIRO_Y,GIRO_Z);      // convert   in  str 
+//			size=sizeof(str4);
+//			HAL_UART_Transmit(&huart2 , (uint8_t *)str4, size, 0xFF);
 		
 		
 		
@@ -420,21 +461,8 @@ void I2C_scaner(void)
 ///////////////////////////////////////////////////////////////////////////////////////////////
 uint8_t init_MPU6050(void)
 {
-	// variables for MPU6050
-	uint16_t addres_devise_MPU6050=0x68;
-	uint16_t WHO_AM_I_MPU6050=0x68;
-	uint16_t WHO_AM_I_ADDRES_MPU6050=0x75;  
-	//
-	// variables for HMC5883L
-	uint16_t addres_devise_HMC5883L=0x1E;
-	uint16_t WHO_AM_I_HMC5883L_A=0x10;
-	uint16_t WHO_AM_I_HMC5883L_B=0x11;
-	uint16_t WHO_AM_I_HMC5883L_C=0x12;
-	uint8_t identification_register_A=0x00;
-	uint8_t identification_register_B=0x00;
-	uint8_t identification_register_C=0x00;
-	
-	//
+	uint8_t Device_found=0;
+	uint8_t STATUS=1;	
 	uint16_t sizebuf=2;
 	uint8_t buff=0x00;
 	uint32_t timeout=0xFFF;
@@ -444,10 +472,8 @@ uint8_t init_MPU6050(void)
 	//
 	
 	// Who I am for MPU6050. Gyroscope, acceleromert
-	//uint8_t STATUS=0;
-	HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)WHO_AM_I_ADDRES_MPU6050, (uint16_t) 1, &buff, (uint16_t) sizebuf,(uint32_t) timeout);
-	/////
-	if(buff!=WHO_AM_I_MPU6050)
+	STATUS=HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)WHO_AM_I_ADDRES_MPU6050, (uint16_t) 1, &buff, (uint16_t) sizebuf,(uint32_t) timeout);
+	if(((buff!=WHO_AM_I_MPU6050)|(STATUS!=Device_found)))
 	{
 		  sprintf(str3,"ERROR: MPU6050 not detected!\r\n");      // convert   in  str 
 			size=sizeof(str3);
@@ -477,46 +503,68 @@ uint8_t init_MPU6050(void)
 		
 		  // Init MPU6050 for see magnitometr
 		  addr=0x6A;														  // 
-			data=0x00;		// +/-16 G -0x18					// 
+			data=0x00;						// 
 			HAL_I2C_Mem_Write(&hi2c1, (uint16_t) addres_devise_MPU6050<<1, addr, (uint16_t) 1, &data, (uint16_t) 1, (uint32_t) 1000);  
 		   
 			addr=0x37;														  // 
-			data=0x02;		// +/-16 G -0x18					// 
+			data=0x02;				// 
 			HAL_I2C_Mem_Write(&hi2c1, (uint16_t) addres_devise_MPU6050<<1, addr, (uint16_t) 1, &data, (uint16_t) 1, (uint32_t) 1000);   
 		  
 			addr=0x6B;														  // 
-			data=0x00;		// +/-16 G -0x18					// 
+			data=0x00;						// 
 			HAL_I2C_Mem_Write(&hi2c1, (uint16_t) addres_devise_MPU6050<<1, addr, (uint16_t) 1, &data, (uint16_t) 1, (uint32_t) 1000);  
-			
-			// Who I am for HMC5883L.  Mafnitometr 
-			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_HMC5883L<<1,(uint16_t)WHO_AM_I_HMC5883L_A, (uint16_t) 1, &buff, (uint16_t) sizebuf,(uint32_t) timeout);
-			identification_register_A=buff;
-			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_HMC5883L<<1,(uint16_t)WHO_AM_I_HMC5883L_B, (uint16_t) 1, &buff, (uint16_t) sizebuf,(uint32_t) timeout);
-			identification_register_B=buff;
-			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_HMC5883L<<1,(uint16_t)WHO_AM_I_HMC5883L_B, (uint16_t) 1, &buff, (uint16_t) sizebuf,(uint32_t) timeout);
-			identification_register_C=buff;
-			
-			
-			sprintf(str3,"REG _ %x \r\n",identification_register_B);      // convert   in  str 
-			size=sizeof(str3);
-			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
-			
-//			if(!=OK)
-//			{
-//					//ERROR
-//			}
-//			else
-//			{
-//				// Init HMC5883L
-//				
-//				
-//				
-//				
-//				
-//			} 
+			// 
+			return 1;
 	}
 }
 
+void read_data_from_MPU6050(void)
+{
+	    uint8_t buff[6]={0};			// Bufer for data acceleration/giroscope
+			uint16_t sizebuf=6;
+	    uint32_t timeout=0xFF;
+			// All reg
+	    uint8_t ACCEL_XOUT_H=0x3B;        // Start read data acceleration
+			uint8_t GYRO_XOUT_H=0x43;   			// / Start read data giroscope
+
+	    // Read accelerometr data
+			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)ACCEL_XOUT_H, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
+			ACCEL_X=(uint16_t)buff[0]<<8|buff[1];  //Convert accelerometr data
+			ACCEL_Y=(uint16_t)buff[2]<<8|buff[3];
+			ACCEL_Z=(uint16_t)buff[4]<<8|buff[5];
+			// Read giroscope data
+			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)GYRO_XOUT_H, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
+			GIRO_X=(uint16_t)buff[0]<<8|buff[1];   //Convert giroscope data
+			GIRO_Y=(uint16_t)buff[2]<<8|buff[3];
+			GIRO_Z=(uint16_t)buff[4]<<8|buff[5];
+}
+
+uint8_t init_HMC5883L(void)
+{
+			int16_t MAG_X=0;
+			int16_t MAG_Y=0;
+			int16_t MAG_Z=0;
+	  
+	
+	
+			//Read Identification register 
+	    uint8_t buff[6]={0};
+	    uint16_t sizebuf=6;
+			uint32_t timeout=0xFF;
+	    uint16_t test=0x03;
+			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_HMC5883L<<1,(uint16_t)test, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
+	    MAG_X=(int16_t)buff[0]<<8|buff[1];
+			MAG_Y=(int16_t)buff[2]<<8|buff[3];
+			MAG_Z=(int16_t)buff[4]<<8|buff[5];
+			
+	    uint8_t size=1;
+			char str3[50]={0};
+			sprintf(str3,"GIRO: X:%d, Y:%d, Z:%d \r\n", MAG_X,MAG_Y,MAG_Z);      // convert   in  str 
+			size=sizeof(str3);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFF);
+
+	    
+}
 
 
 
