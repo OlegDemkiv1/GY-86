@@ -162,7 +162,7 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 		
-			HAL_Delay(50);
+			HAL_Delay(200);
 
 			char str3[100]={0};
 		  uint8_t size=0;
@@ -174,9 +174,30 @@ int main(void)
 			//
 			// print data in comport
 			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
-			sprintf(str3,"X:%d, Y%d,Z %d \n\r",ACCEL_XANGLE,ACCEL_YANGLE,ACCEL_ZANGLE);      // convert   in  str 
+			sprintf(str3,"ACCELERATION: X:%d, Y%d,Z %d \n\r",ACCEL_XANGLE,ACCEL_YANGLE,ACCEL_ZANGLE);      // convert   in  str 
 			size=sizeof(str3);
 			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
+			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
+		  //
+			
+			//Convert giroscope data in angle/sec
+			double GIRO_X_X=(double)GIRO_X/131.0;
+			double GIRO_Y_Y=(double)GIRO_Y/131.0;
+			double GIRO_Z_Z=0;
+			
+			//data->x_gyro = (float)gyroX * GYRO_SCALE - base_x_gyro;
+			
+			#define GYRO_SCALE 1.0f/65.5f
+			GIRO_X_X=(float)GIRO_X*GYRO_SCALE;
+			GIRO_Y_Y=(float)GIRO_Y*GYRO_SCALE;
+			GIRO_Z_Z=(float)GIRO_Z*GYRO_SCALE;
+			
+			// print data in comport
+			char str5[30]={0};
+			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
+			sprintf(str5,"GIROSCOPE: X:%d, Y:%d, Z:%d\n\r",(int)GIRO_X_X, (int)GIRO_Y_Y, (int)GIRO_Z_Z);     // convert   in  str 
+			size=sizeof(str5);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str5, size, 0xFFFF);
 			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
 		  //
 		
