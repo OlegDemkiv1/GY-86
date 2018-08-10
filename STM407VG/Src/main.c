@@ -46,6 +46,8 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+TIM_HandleTypeDef htim2;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -79,8 +81,8 @@ int16_t MAG_Z=0;
 //
 
 void I2C_scaner(void);
-uint8_t init_MPU6050(void);
-uint8_t read_data_from_HMC5883L(void);
+void init_MPU6050(void);
+void read_data_from_HMC5883L(void);
 void read_data_from_MPU6050(void);
 
 
@@ -91,6 +93,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM2_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -128,10 +131,15 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_USART2_UART_Init();
+  MX_TIM2_Init();
 
   /* USER CODE BEGIN 2 */
   I2C_scaner();
 	init_MPU6050();
+	
+	HAL_TIM_Base_Start(&htim2);    		 //Start Timer1
+	HAL_TIM_Base_Start_IT(&htim2);
+	
 	//init_HMC5883L();
 	
 	
@@ -142,20 +150,18 @@ int main(void)
   while (1)
   {
   /* USER CODE END WHILE */
-   
+
   /* USER CODE BEGIN 3 */
 		
-			HAL_Delay(100);
+			HAL_Delay(50);
 
-		  read_data_from_MPU6050();
-		  read_data_from_HMC5883L();
-		
 			char str3[100]={0};
 		  uint8_t size=0;
+			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
 			sprintf(str3,"MAG| X: %d, Y: %d, Z: %d|\r\nACCEL| X: %d, Y: %d, Z: %d|\r\nGIRO| X: %d, Y: %d, Z: %d|\r\n",MAG_X, MAG_Y, MAG_Z,ACCEL_X, ACCEL_X, ACCEL_X,GIRO_X,GIRO_Y,GIRO_Z);      // convert   in  str 
 			size=sizeof(str3);
 			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
-			 
+			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
 		
 		
   }
@@ -232,6 +238,38 @@ static void MX_I2C1_Init(void)
   hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
   hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
   if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
+/* TIM2 init function */
+static void MX_TIM2_Init(void)
+{
+
+  TIM_ClockConfigTypeDef sClockSourceConfig;
+  TIM_MasterConfigTypeDef sMasterConfig;
+
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 8399;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 200;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -458,7 +496,7 @@ void I2C_scaner(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-uint8_t init_MPU6050(void)
+void init_MPU6050(void)
 {
 	uint8_t Device_found=0;
 	uint8_t STATUS=1;	
@@ -477,7 +515,6 @@ uint8_t init_MPU6050(void)
 		  sprintf(str3,"ERROR: MPU6050 not detected!\r\n");      // convert   in  str 
 			size=sizeof(str3);
 			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
-			return 0;
 	}
 	else
 	{  
@@ -513,7 +550,6 @@ uint8_t init_MPU6050(void)
 			data=0x00;						// 
 			HAL_I2C_Mem_Write(&hi2c1, (uint16_t) addres_devise_MPU6050<<1, addr, (uint16_t) 1, &data, (uint16_t) 1, (uint32_t) 1000);  
 			// 
-			return 1;
 	}
 }
 
@@ -538,7 +574,7 @@ void read_data_from_MPU6050(void)
 			GIRO_Z=(uint16_t)buff[4]<<8|buff[5];
 }
 
-uint8_t read_data_from_HMC5883L(void)
+void read_data_from_HMC5883L(void)
 {
 			uint32_t timeout=0xFF;
 			uint8_t STATUS=1;
