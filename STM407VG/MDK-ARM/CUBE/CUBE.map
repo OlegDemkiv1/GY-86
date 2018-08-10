@@ -1405,10 +1405,10 @@ Image Symbol Table
     _sputc                                   0x0800271d   Thumb Code    10  printf5.o(i._sputc)
     i.init_MPU6050                           0x08002728   Section        0  main.o(i.init_MPU6050)
     i.main                                   0x080028b8   Section        0  main.o(i.main)
-    i.read_data_from_HMC5883L                0x08002998   Section        0  main.o(i.read_data_from_HMC5883L)
-    i.read_data_from_MPU6050                 0x08002a08   Section        0  main.o(i.read_data_from_MPU6050)
-    .constdata                               0x08002a90   Section       16  system_stm32f4xx.o(.constdata)
-    .constdata                               0x08002aa0   Section        8  system_stm32f4xx.o(.constdata)
+    i.read_data_from_HMC5883L                0x08002980   Section        0  main.o(i.read_data_from_HMC5883L)
+    i.read_data_from_MPU6050                 0x080029f0   Section        0  main.o(i.read_data_from_MPU6050)
+    .constdata                               0x08002a78   Section       16  system_stm32f4xx.o(.constdata)
+    .constdata                               0x08002a88   Section        8  system_stm32f4xx.o(.constdata)
     .data                                    0x20000000   Section        4  system_stm32f4xx.o(.data)
     .data                                    0x20000004   Section       30  main.o(.data)
     .data                                    0x20000024   Section        4  stm32f4xx_hal.o(.data)
@@ -1644,13 +1644,13 @@ Image Symbol Table
     __scatterload_null                       0x0800244b   Thumb Code     2  handlers.o(i.__scatterload_null)
     __scatterload_zeroinit                   0x0800244d   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
     init_MPU6050                             0x08002729   Thumb Code   328  main.o(i.init_MPU6050)
-    main                                     0x080028b9   Thumb Code   210  main.o(i.main)
-    read_data_from_HMC5883L                  0x08002999   Thumb Code   102  main.o(i.read_data_from_HMC5883L)
-    read_data_from_MPU6050                   0x08002a09   Thumb Code   128  main.o(i.read_data_from_MPU6050)
-    AHBPrescTable                            0x08002a90   Data          16  system_stm32f4xx.o(.constdata)
-    APBPrescTable                            0x08002aa0   Data           8  system_stm32f4xx.o(.constdata)
-    Region$$Table$$Base                      0x08002aa8   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x08002ac8   Number         0  anon$$obj.o(Region$$Table)
+    main                                     0x080028b9   Thumb Code   188  main.o(i.main)
+    read_data_from_HMC5883L                  0x08002981   Thumb Code   102  main.o(i.read_data_from_HMC5883L)
+    read_data_from_MPU6050                   0x080029f1   Thumb Code   128  main.o(i.read_data_from_MPU6050)
+    AHBPrescTable                            0x08002a78   Data          16  system_stm32f4xx.o(.constdata)
+    APBPrescTable                            0x08002a88   Data           8  system_stm32f4xx.o(.constdata)
+    Region$$Table$$Base                      0x08002a90   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x08002ab0   Number         0  anon$$obj.o(Region$$Table)
     SystemCoreClock                          0x20000000   Data           4  system_stm32f4xx.o(.data)
     Continuous_Measurement_Moden             0x20000004   Data           1  main.o(.data)
     Mode_Register                            0x20000005   Data           1  main.o(.data)
@@ -1682,9 +1682,9 @@ Memory Map of the image
 
   Image Entry point : 0x08000189
 
-  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00002af0, Max: 0x00100000, ABSOLUTE)
+  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00002ad8, Max: 0x00100000, ABSOLUTE)
 
-    Execution Region ER_IROM1 (Exec base: 0x08000000, Load base: 0x08000000, Size: 0x00002ac8, Max: 0x00100000, ABSOLUTE)
+    Execution Region ER_IROM1 (Exec base: 0x08000000, Load base: 0x08000000, Size: 0x00002ab0, Max: 0x00100000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -1801,22 +1801,22 @@ Memory Map of the image
     0x0800271c   0x0800271c   0x0000000a   Code   RO         3107    i._sputc            mc_w.l(printf5.o)
     0x08002726   0x08002726   0x00000002   PAD
     0x08002728   0x08002728   0x00000190   Code   RO          257    i.init_MPU6050      main.o
-    0x080028b8   0x080028b8   0x000000e0   Code   RO          258    i.main              main.o
-    0x08002998   0x08002998   0x00000070   Code   RO          259    i.read_data_from_HMC5883L  main.o
-    0x08002a08   0x08002a08   0x00000088   Code   RO          260    i.read_data_from_MPU6050  main.o
-    0x08002a90   0x08002a90   0x00000010   Data   RO            6    .constdata          system_stm32f4xx.o
-    0x08002aa0   0x08002aa0   0x00000008   Data   RO            7    .constdata          system_stm32f4xx.o
-    0x08002aa8   0x08002aa8   0x00000020   Data   RO         3270    Region$$Table       anon$$obj.o
+    0x080028b8   0x080028b8   0x000000c8   Code   RO          258    i.main              main.o
+    0x08002980   0x08002980   0x00000070   Code   RO          259    i.read_data_from_HMC5883L  main.o
+    0x080029f0   0x080029f0   0x00000088   Code   RO          260    i.read_data_from_MPU6050  main.o
+    0x08002a78   0x08002a78   0x00000010   Data   RO            6    .constdata          system_stm32f4xx.o
+    0x08002a88   0x08002a88   0x00000008   Data   RO            7    .constdata          system_stm32f4xx.o
+    0x08002a90   0x08002a90   0x00000020   Data   RO         3270    Region$$Table       anon$$obj.o
 
 
-    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x08002ac8, Size: 0x000004f8, Max: 0x00020000, ABSOLUTE)
+    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x08002ab0, Size: 0x000004f8, Max: 0x00020000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
-    0x20000000   0x08002ac8   0x00000004   Data   RW            8    .data               system_stm32f4xx.o
-    0x20000004   0x08002acc   0x0000001e   Data   RW          262    .data               main.o
-    0x20000022   0x08002aea   0x00000002   PAD
-    0x20000024   0x08002aec   0x00000004   Data   RW         2090    .data               stm32f4xx_hal.o
+    0x20000000   0x08002ab0   0x00000004   Data   RW            8    .data               system_stm32f4xx.o
+    0x20000004   0x08002ab4   0x0000001e   Data   RW          262    .data               main.o
+    0x20000022   0x08002ad2   0x00000002   PAD
+    0x20000024   0x08002ad4   0x00000004   Data   RW         2090    .data               stm32f4xx_hal.o
     0x20000028        -       0x000000d0   Zero   RW          261    .bss                main.o
     0x200000f8        -       0x00000400   Zero   RW          137    STACK               startup_stm32f407xx.o
 
@@ -1828,7 +1828,7 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
 
-      1916        246          0         30        208       8942   main.o
+      1892        244          0         30        208       8926   main.o
         36          8        392          0       1024        808   startup_stm32f407xx.o
        148         22          0          4          0       4451   stm32f4xx_hal.o
        228         14          0          0          0      32181   stm32f4xx_hal_cortex.o
@@ -1844,7 +1844,7 @@ Image component sizes
         84         18         24          4          0     682643   system_stm32f4xx.o
 
     ----------------------------------------------------------------------
-      9462        570        448         40       1232     780001   Object Totals
+      9438        568        448         40       1232     779985   Object Totals
          0          0         32          0          0          0   (incl. Generated)
         18          0          0          2          0          0   (incl. Padding)
 
@@ -1888,15 +1888,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     10504        638        448         40       1232     773001   Grand Totals
-     10504        638        448         40       1232     773001   ELF Image Totals
-     10504        638        448         40          0          0   ROM Totals
+     10480        636        448         40       1232     772985   Grand Totals
+     10480        636        448         40       1232     772985   ELF Image Totals
+     10480        636        448         40          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                10952 (  10.70kB)
+    Total RO  Size (Code + RO Data)                10928 (  10.67kB)
     Total RW  Size (RW Data + ZI Data)              1272 (   1.24kB)
-    Total ROM Size (Code + RO Data + RW Data)      10992 (  10.73kB)
+    Total ROM Size (Code + RO Data + RW Data)      10968 (  10.71kB)
 
 ==============================================================================
 
