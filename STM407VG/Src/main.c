@@ -155,12 +155,33 @@ int main(void)
 		
 			HAL_Delay(50);
 
+		  uint8_t begin=0x12;
+		  uint8_t separator=0x10;
+		  uint8_t end=0x13;
+		
+		  // Init buffer for transmit
+		  uint8_t buffer_for_transmit[13]={0};
+			buffer_for_transmit[0]=begin;
+			buffer_for_transmit[1]=separator;
+			buffer_for_transmit[2]=(uint8_t)(ACCEL_X>>8);
+			buffer_for_transmit[3]=(uint8_t)ACCEL_X;
+			buffer_for_transmit[4]=separator;
+			buffer_for_transmit[5]=separator;
+			buffer_for_transmit[6]=(uint8_t)(ACCEL_Y>>8);
+			buffer_for_transmit[7]=(uint8_t)ACCEL_Y;
+			buffer_for_transmit[8]=separator;
+			buffer_for_transmit[9]=separator;
+			buffer_for_transmit[10]=(uint8_t)(ACCEL_Z>>8);
+			buffer_for_transmit[11]=(uint8_t)ACCEL_Z;
+			buffer_for_transmit[12]=end;
+		
 			char str3[100]={0};
 		  uint8_t size=0;
 			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
-			sprintf(str3,"MAG| X: %d, Y: %d, Z: %d|\r\nACCEL| X: %d, Y: %d, Z: %d|\r\nGIRO| X: %d, Y: %d, Z: %d|\r\n",MAG_X, MAG_Y, MAG_Z,ACCEL_X, ACCEL_X, ACCEL_X,GIRO_X,GIRO_Y,GIRO_Z);      // convert   in  str 
-			size=sizeof(str3);
-			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
+			
+			//sprintf(str3,buffer_for_transmit);      // convert   in  str 
+			size=sizeof(buffer_for_transmit);
+			HAL_UART_Transmit(&huart2 , buffer_for_transmit, 13, 0xFFF);
 			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
 		
 		
