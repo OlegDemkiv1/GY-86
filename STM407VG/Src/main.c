@@ -38,6 +38,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
+#include <math.h>
 
 /* USER CODE BEGIN Includes */
 
@@ -59,6 +60,11 @@ uint16_t WHO_AM_I_ADDRES_MPU6050=0x75;
 int16_t ACCEL_X=0;
 int16_t ACCEL_Y=0;
 int16_t ACCEL_Z=0;
+// Variabble for angles ACCEL MPU6050
+int ACCEL_XANGLE=0;
+int ACCEL_YANGLE=0;
+int ACCEL_ZANGLE=0;
+//
 int16_t GIRO_X=0;
 int16_t GIRO_Y=0;
 int16_t GIRO_Z=0;
@@ -79,6 +85,9 @@ int16_t MAG_Y=0;
 int16_t MAG_Z=0;
 	  
 //
+
+
+
 
 void I2C_scaner(void);
 void init_MPU6050(void);
@@ -144,7 +153,7 @@ int main(void)
 	
 	
   /* USER CODE END 2 */
-
+  float i=0;
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -155,31 +164,21 @@ int main(void)
 		
 			HAL_Delay(50);
 
-		  uint8_t begin=0x12;
-		  uint8_t separator=0x10;
-		  uint8_t end=0x13;
-		
-		  // Init buffer for transmit
-		  uint8_t buffer_for_transmit[9]={0};
-			buffer_for_transmit[0]=begin;
-			buffer_for_transmit[1]=separator;
-			buffer_for_transmit[2]=(uint8_t)(ACCEL_X>>8);
-			buffer_for_transmit[3]=(uint8_t)ACCEL_X;
-			buffer_for_transmit[4]=separator;
-			buffer_for_transmit[5]=separator;
-			buffer_for_transmit[6]=(uint8_t)(ACCEL_Y>>8);
-			buffer_for_transmit[7]=(uint8_t)ACCEL_Y;
-			buffer_for_transmit[8]=end;
-		
 			char str3[100]={0};
 		  uint8_t size=0;
-			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
 			
-			//sprintf(str3,buffer_for_transmit);      // convert   in  str 
-			size=sizeof(buffer_for_transmit);
-			HAL_UART_Transmit(&huart2 , buffer_for_transmit, 9, 0xFFF);
+			//Convert accelerometr data in angle
+			ACCEL_XANGLE = 57.295*atan((float)-ACCEL_X/ sqrt(pow((float)ACCEL_Y,2)+pow((float)ACCEL_Z,2)));
+			ACCEL_YANGLE = 57.295*atan((float)-ACCEL_Y/ sqrt(pow((float)ACCEL_X,2)+pow((float)ACCEL_Z,2)));
+			ACCEL_ZANGLE = 57.295*atan((float)-ACCEL_Z/ sqrt(pow((float)ACCEL_X,2)+pow((float)ACCEL_Y,2)));
+			//
+			// print data in comport
+			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
+			sprintf(str3,"X:%d, Y%d,Z %d \n\r",ACCEL_XANGLE,ACCEL_YANGLE,ACCEL_ZANGLE);      // convert   in  str 
+			size=sizeof(str3);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
 			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
-		
+		  //
 		
   }
   /* USER CODE END 3 */
