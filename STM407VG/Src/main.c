@@ -53,6 +53,8 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+// 
+uint8_t STATUS=1; // devaice not found
 //Registers MPU6050
 uint16_t addres_devise_MPU6050=0x68;
 uint16_t WHO_AM_I_MPU6050=0x68;
@@ -64,11 +66,14 @@ int16_t ACCEL_Z=0;
 int ACCEL_XANGLE=0;
 int ACCEL_YANGLE=0;
 int ACCEL_ZANGLE=0;
-//
+// Variabble for temperature measure
+uint16_t TEMP_OUT_H=0x41; 
+uint16_t TEMP_OUT_L=0x42; 
+int16_t TEMPERATURE=0;
+// variables for giroscope
 int16_t GIRO_X=0;
 int16_t GIRO_Y=0;
 int16_t GIRO_Z=0;
-//
 // variables for HMC5883L
 uint16_t addres_devise_HMC5883L=0x1E;
 uint16_t WHO_AM_I_HMC5883L_A=0x10;
@@ -83,17 +88,18 @@ uint16_t Data_Output_X_MSB_Register=0x03;
 int16_t MAG_X=0;
 int16_t MAG_Y=0;
 int16_t MAG_Z=0;
-	  
-//
+// variable for MS5611
+uint16_t addres_devise_MS5611=0x77;
 
 
 
 
 void I2C_scaner(void);
 void init_MPU6050(void);
+void init_MS5611(void);
 void read_data_from_HMC5883L(void);
 void read_data_from_MPU6050(void);
-
+void read_temp_from_MPU6050(void);
 
 /* USER CODE END PV */
 
@@ -168,38 +174,58 @@ int main(void)
 		  uint8_t size=0;
 			
 			//Convert accelerometr data in angle
+			// FORMULA ||| X_ANHLE=
 			ACCEL_XANGLE = 57.295*atan((float)-ACCEL_X/ sqrt(pow((float)ACCEL_Y,2)+pow((float)ACCEL_Z,2)));
 			ACCEL_YANGLE = 57.295*atan((float)-ACCEL_Y/ sqrt(pow((float)ACCEL_X,2)+pow((float)ACCEL_Z,2)));
 			ACCEL_ZANGLE = 57.295*atan((float)-ACCEL_Z/ sqrt(pow((float)ACCEL_X,2)+pow((float)ACCEL_Y,2)));
-			//
 			// print data in comport
 			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
 			sprintf(str3,"ACCELERATION: X:%d, Y%d,Z %d \n\r",ACCEL_XANGLE,ACCEL_YANGLE,ACCEL_ZANGLE);      // convert   in  str 
 			size=sizeof(str3);
-			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFFFF);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str3, size, 0xFF);
 			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
 		  //
+			
 			
 			//Convert giroscope data in angle/sec
 			double GIRO_X_X=(double)GIRO_X/131.0;
 			double GIRO_Y_Y=(double)GIRO_Y/131.0;
-			double GIRO_Z_Z=0;
-			
+			double GIRO_Z_Z=(double)GIRO_Z/131.0;
 			//data->x_gyro = (float)gyroX * GYRO_SCALE - base_x_gyro;
-			
 			#define GYRO_SCALE 1.0f/65.5f
 			GIRO_X_X=(float)GIRO_X*GYRO_SCALE;
 			GIRO_Y_Y=(float)GIRO_Y*GYRO_SCALE;
 			GIRO_Z_Z=(float)GIRO_Z*GYRO_SCALE;
-			
 			// print data in comport
-			char str5[30]={0};
+			char str5[100]={0};
 			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
-			sprintf(str5,"GIROSCOPE: X:%d, Y:%d, Z:%d\n\r",(int)GIRO_X_X, (int)GIRO_Y_Y, (int)GIRO_Z_Z);     // convert   in  str 
+			sprintf(str5,"GIROSCOPE: X:%d, Y:%d, Z:%d \n\r",(int)GIRO_X_X, (int)GIRO_Y_Y, (int)GIRO_Z_Z);     // convert   in  str 
 			size=sizeof(str5);
-			HAL_UART_Transmit(&huart2 , (uint8_t *)str5, size, 0xFFFF);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str5, size, 0xFF);
 			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
 		  //
+			
+			
+			// MAGNETOMETR
+			char str6[100]={0};
+			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
+			sprintf(str5,"MAGNETOMETR: X:%d, Y:%d, Z:%d \n\r",(int)MAG_X, (int)MAG_Y, (int)MAG_Z);     // convert   in  str 
+			size=sizeof(str5);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str5, size, 0xFF);
+			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
+			
+			
+			// TEMPERATURE from MPU6050
+			char str7[100]={0};
+			HAL_TIM_Base_Stop_IT(&htim2);    // Stop interrupt
+			sprintf(str5,"TEMPERATURE MPU6050 %d \n\r", TEMPERATURE);     // convert   in  str 
+			size=sizeof(str5);
+			HAL_UART_Transmit(&huart2 , (uint8_t *)str5, size, 0xFF);
+			HAL_TIM_Base_Start_IT(&htim2);    // Start interrupt
+			
+			
+			
+			
 		
   }
   /* USER CODE END 3 */
@@ -600,15 +626,29 @@ void read_data_from_MPU6050(void)
 			uint8_t GYRO_XOUT_H=0x43;   			// / Start read data giroscope
 
 	    // Read accelerometr data
-			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)ACCEL_XOUT_H, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
-			ACCEL_X=(uint16_t)buff[0]<<8|buff[1];  //Convert accelerometr data
-			ACCEL_Y=(uint16_t)buff[2]<<8|buff[3];
-			ACCEL_Z=(uint16_t)buff[4]<<8|buff[5];
+			STATUS=HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)ACCEL_XOUT_H, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
+			if(STATUS==1)
+			{
+						//ERROR HANDLER: devise not found
+			}
+			else
+			{
+						ACCEL_X=(uint16_t)buff[0]<<8|buff[1];  //Convert accelerometr data
+						ACCEL_Y=(uint16_t)buff[2]<<8|buff[3];
+						ACCEL_Z=(uint16_t)buff[4]<<8|buff[5];
+			}
 			// Read giroscope data
-			HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)GYRO_XOUT_H, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
-			GIRO_X=(uint16_t)buff[0]<<8|buff[1];   //Convert giroscope data
-			GIRO_Y=(uint16_t)buff[2]<<8|buff[3];
-			GIRO_Z=(uint16_t)buff[4]<<8|buff[5];
+			STATUS=HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)GYRO_XOUT_H, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
+			if(STATUS==1)
+			{
+						//ERROR HANDLER: devise not found
+			}
+			else
+			{
+						GIRO_X=(uint16_t)buff[0]<<8|buff[1];   //Convert giroscope data
+						GIRO_Y=(uint16_t)buff[2]<<8|buff[3];
+						GIRO_Z=(uint16_t)buff[4]<<8|buff[5];
+			}
 }
 
 void read_data_from_HMC5883L(void)
@@ -617,9 +657,9 @@ void read_data_from_HMC5883L(void)
 			uint8_t STATUS=1;
 	    // Init magnitometr for enabble Continuous-Measurement Mode
 			STATUS=HAL_I2C_Mem_Write(&hi2c1, (uint16_t)addres_devise_HMC5883L<<1, (uint16_t) Mode_Register, (uint16_t) 1, &Continuous_Measurement_Moden, (uint16_t) 1, (uint32_t) 0xFF);
-			if(STATUS==1)			// Dewise not respond
+			if(STATUS==1)			
 			{
-						//ERROR
+						//ERROR HANDLER: devise not found
 			}
 			else							// Dewise respond OK
 			{
@@ -633,6 +673,38 @@ void read_data_from_HMC5883L(void)
 			}
 }
 
+void read_temp_from_MPU6050(void)
+{
+			uint32_t timeout=0xFF;
+			uint8_t buff[2]={0};
+			uint16_t sizebuf=2;
+			
+			STATUS=HAL_I2C_Mem_Read(&hi2c1, (uint16_t)addres_devise_MPU6050<<1,(uint16_t)TEMP_OUT_H, (uint16_t) 1, buff, (uint16_t) sizebuf,(uint32_t) timeout);
+	    if(STATUS==1)			
+			{
+						//ERROR HANDLER: devise not found
+			}
+			else
+			{
+						//convert data in temperature
+				    TEMPERATURE=(uint16_t)buff[0]<<8|buff[1];
+				    TEMPERATURE=(TEMPERATURE)/340+36.53; 
+			}
+}
+
+void init_MS5611(void)
+{
+		uint8_t RESET=0x1E;
+	  
+	
+}
+
+
+
+
+
+
+// EROR HENDLER
 
 
 /* USER CODE END 4 */

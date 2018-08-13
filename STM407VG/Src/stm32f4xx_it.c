@@ -39,6 +39,7 @@
 #include "main.h"
 extern void read_data_from_MPU6050(void);
 extern void read_data_from_HMC5883L(void);
+extern void read_temp_from_MPU6050(void);
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -86,6 +87,7 @@ void TIM2_IRQHandler(void)
 	// Read data from all sensors
 	read_data_from_MPU6050();
 	read_data_from_HMC5883L();
+	read_temp_from_MPU6050();
 	
   /* USER CODE END TIM2_IRQn 1 */
 }
